@@ -1,0 +1,186 @@
+// src/views/StudentView.vue
+<template>
+  <div class="container mx-auto p-4">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-gray-800">Student Reading</h1>
+      <div class="border-blue-500 border-b-2 w-32 mt-2"></div>
+    </div>
+
+    <!-- Reading Interface -->
+    <div v-if="currentChunk" class="mb-8">
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <!-- Breadcrumb -->
+        <div class="mb-4 text-sm">
+          <button @click="exitReading" class="text-blue-500 hover:text-blue-700">
+            ← Back to texts
+          </button>
+        </div>
+
+        <!-- Current Text Info -->
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold">{{ currentText.title }}</h2>
+          <p class="text-gray-600">Chunk {{ currentChunk.sequence_number }}</p>
+        </div>
+
+        <!-- Reading Content -->
+        <div class="prose max-w-none mb-6">
+          <p>{{ currentChunk.content }}</p>
+        </div>
+
+        <!-- Navigation -->
+        <button
+          @click="loadNextChunk"
+          class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          :disabled="isLoading"
+        >
+          {{ isLoading ? 'Loading...' : 'Next Chunk →' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Teacher and Text Selection -->
+    <div v-else>
+      <!-- Teachers List -->
+      <div v-if="!selectedTeacher" class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-xl font-semibold mb-4">Select a Teacher</h2>
+
+        <div v-if="isLoading" class="text-center py-4">Loading teachers...</div>
+
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <button
+            v-for="teacher in teachers"
+            :key="teacher.id"
+            @click="selectTeacher(teacher)"
+            class="p-4 border rounded-md hover:bg-gray-50 text-left"
+          >
+            <h3 class="font-medium">{{ teacher.full_name }}</h3>
+          </button>
+        </div>
+      </div>
+
+      <!-- Texts List -->
+      <div v-else class="bg-white rounded-lg shadow-md p-6">
+        <div class="mb-4">
+          <button @click="selectedTeacher = null" class="text-blue-500 hover:text-blue-700">
+            ← Back to teachers
+          </button>
+        </div>
+
+        <h2 class="text-xl font-semibold mb-4">
+          Select a Text from {{ selectedTeacher.full_name }}
+        </h2>
+
+        <div v-if="isLoading" class="text-center py-4">Loading texts...</div>
+
+        <div v-else-if="texts.length === 0" class="text-center py-4 text-gray-600">
+          No texts available from this teacher
+        </div>
+
+        <div v-else class="space-y-4">
+          <button
+            v-for="text in texts"
+            :key="text.id"
+            @click="startReading(text)"
+            class="w-full p-4 border rounded-md hover:bg-gray-50 text-left"
+          >
+            <h3 class="font-medium">{{ text.title }}</h3>
+            <p class="text-sm text-gray-600">
+              Added {{ new Date(text.created_at).toLocaleDateString() }}
+            </p>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import {
+  getTeachers,
+  getTeacherTextsForStudent,
+  getFirstChunk,
+  getNextChunk,
+} from '../services/api'
+
+// State
+const teachers = ref([])
+const selectedTeacher = ref(null)
+const texts = ref([])
+const currentText = ref(null)
+const currentChunk = ref(null)
+const isLoading = ref(false)
+const error = ref('')
+
+// Load initial teachers list
+const loadTeachers = async () => {
+  isLoading.value = true
+  try {
+    teachers.value = await getTeachers()
+  } catch (err) {
+    error.value = 'Failed to load teachers'
+    console.error(err)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Select a teacher and load their texts
+const selectTeacher = async (teacher) => {
+  selectedTeacher.value = teacher
+  isLoading.value = true
+  try {
+    texts.value = await getTeacherTextsForStudent(teacher.id)
+  } catch (err) {
+    error.value = 'Failed to load texts'
+    console.error(err)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Start reading a text
+const startReading = async (text) => {
+  currentText.value = text
+  isLoading.value = true
+  try {
+    const chunk = await getFirstChunk(text.id)
+    currentChunk.value = chunk
+  } catch (err) {
+    error.value = 'Failed to load text chunk'
+    console.error(err)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Load next chunk
+const loadNextChunk = async () => {
+  if (!currentChunk.value) return
+
+  isLoading.value = true
+  try {
+    const nextChunk = await getNextChunk(currentText.value.id, currentChunk.value.chunk_id)
+    currentChunk.value = nextChunk
+  } catch (err) {
+    if (err.message === 'No more chunks available') {
+      alert('You have completed this text!')
+      exitReading()
+    } else {
+      error.value = 'Failed to load next chunk'
+      console.error(err)
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Exit reading mode
+const exitReading = () => {
+  currentText.value = null
+  currentChunk.value = null
+}
+
+onMounted(loadTeachers)
+</script>
