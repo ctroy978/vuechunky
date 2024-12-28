@@ -8,92 +8,35 @@
     </div>
 
     <!-- Reading Interface -->
-    <div v-if="currentChunk" class="mb-8">
-      <div class="bg-white rounded-lg shadow-md p-6">
-        <!-- Breadcrumb -->
-        <div class="mb-4 text-sm">
-          <button @click="exitReading" class="text-blue-500 hover:text-blue-700">
-            ← Back to texts
-          </button>
-        </div>
-
-        <!-- Current Text Info -->
-        <div class="mb-6">
-          <h2 class="text-xl font-semibold">
-            {{ currentText.title.replace(/<\/?[^>]+(>|$)/g, '') }}
-          </h2>
-          <p class="text-gray-600">Chunk {{ currentChunk.sequence_number }}</p>
-        </div>
-
-        <!-- Reading Content -->
-        <div class="prose max-w-none mb-6">
-          <div v-html="currentChunk.content"></div>
-        </div>
-
-        <!-- Navigation -->
-        <button
-          @click="loadNextChunk"
-          class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          :disabled="isLoading"
-        >
-          {{ isLoading ? 'Loading...' : 'Next Chunk →' }}
-        </button>
-      </div>
-    </div>
+    <ReadingInterface
+      v-if="currentChunk"
+      :text="currentText"
+      :chunk="currentChunk"
+      :question="currentQuestion"
+      :isLoading="isLoading"
+      @exit="exitReading"
+      @next="loadNextChunk"
+      @submit-answer="handleAnswerSubmit"
+    />
 
     <!-- Teacher and Text Selection -->
-    <div v-else>
-      <!-- Teachers List -->
-      <div v-if="!selectedTeacher" class="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 class="text-xl font-semibold mb-4">Select a Teacher</h2>
+    <template v-else>
+      <TeacherList
+        v-if="!selectedTeacher"
+        :teachers="teachers"
+        :isLoading="isLoading"
+        @select="selectTeacher"
+      />
 
-        <div v-if="isLoading" class="text-center py-4">Loading teachers...</div>
-
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <button
-            v-for="teacher in teachers"
-            :key="teacher.id"
-            @click="selectTeacher(teacher)"
-            class="p-4 border rounded-md hover:bg-gray-50 text-left"
-          >
-            <h3 class="font-medium">{{ teacher.full_name }}</h3>
-          </button>
-        </div>
-      </div>
-
-      <!-- Texts List -->
-      <div v-else class="bg-white rounded-lg shadow-md p-6">
-        <div class="mb-4">
-          <button @click="selectedTeacher = null" class="text-blue-500 hover:text-blue-700">
-            ← Back to teachers
-          </button>
-        </div>
-
-        <h2 class="text-xl font-semibold mb-4">
-          Select a Text from {{ selectedTeacher.full_name }}
-        </h2>
-
-        <div v-if="isLoading" class="text-center py-4">Loading texts...</div>
-
-        <div v-else-if="texts.length === 0" class="text-center py-4 text-gray-600">
-          No texts available from this teacher
-        </div>
-
-        <div v-else class="space-y-4">
-          <button
-            v-for="text in texts"
-            :key="text.id"
-            @click="startReading(text)"
-            class="w-full p-4 border rounded-md hover:bg-gray-50 text-left"
-          >
-            <h3 class="font-medium">{{ text.title.replace(/<\/?[^>]+(>|$)/g, '') }}</h3>
-            <p class="text-sm text-gray-600">
-              Added {{ new Date(text.created_at).toLocaleDateString() }}
-            </p>
-          </button>
-        </div>
-      </div>
-    </div>
+      <TextList
+        v-else
+        :teacher="selectedTeacher"
+        :texts="texts"
+        :isLoading="isLoading"
+        @back="selectedTeacher = null"
+        @select="startReading"
+      />
+    </template>
   </div>
 </template>
 
@@ -104,7 +47,11 @@ import {
   getTeacherTextsForStudent,
   getFirstChunk,
   getNextChunk,
+  generateQuestion,
 } from '../services/api'
+import TeacherList from '../components/student/TeacherList.vue'
+import TextList from '../components/student/TextList.vue'
+import ReadingInterface from '../components/student/ReadingInterface.vue'
 
 // State
 const teachers = ref([])
@@ -112,8 +59,31 @@ const selectedTeacher = ref(null)
 const texts = ref([])
 const currentText = ref(null)
 const currentChunk = ref(null)
+const currentQuestion = ref('')
 const isLoading = ref(false)
 const error = ref('')
+
+const loadQuestion = async (chunkId, textId) => {
+  try {
+    // Handle both id and chunk_id
+    const actualChunkId = typeof chunkId === 'object' ? chunkId.chunk_id || chunkId.id : chunkId
+    const response = await generateQuestion(actualChunkId, textId)
+    console.log('Question loaded:', response) // Debug log
+    currentQuestion.value = response.question
+  } catch (err) {
+    console.error('Failed to load question:', err)
+    currentQuestion.value = 'What is the main idea of this passage?' // Fallback question
+  }
+  console.log('Current question value:', currentQuestion.value) // Debug log
+}
+
+// Handle answer submission
+const handleAnswerSubmit = async (answer) => {
+  // TODO: Implement answer validation/feedback
+  // For now, we'll just console.log the answer
+  console.log('Student answer:', answer)
+  return true // Simulate successful submission
+}
 
 // Load initial teachers list
 const loadTeachers = async () => {
@@ -142,13 +112,17 @@ const selectTeacher = async (teacher) => {
   }
 }
 
-// Start reading a text
 const startReading = async (text) => {
   currentText.value = text
   isLoading.value = true
   try {
     const chunk = await getFirstChunk(text.id)
     currentChunk.value = chunk
+    if (chunk && (chunk.id || chunk.chunk_id)) {
+      await loadQuestion(chunk.chunk_id || chunk.id, text.id)
+    } else {
+      console.error('Invalid chunk data:', chunk)
+    }
   } catch (err) {
     error.value = 'Failed to load text chunk'
     console.error(err)
@@ -163,15 +137,24 @@ const loadNextChunk = async () => {
 
   isLoading.value = true
   try {
-    const nextChunk = await getNextChunk(currentText.value.id, currentChunk.value.chunk_id)
+    console.log('Current chunk before loading next:', currentChunk.value) // Debug log
+    const nextChunk = await getNextChunk(currentText.value.id, currentChunk.value.chunk_id) // Changed from .id to .chunk_id
+    console.log('Next chunk received:', nextChunk) // Debug log
     currentChunk.value = nextChunk
+    if (nextChunk && (nextChunk.id || nextChunk.chunk_id)) {
+      // Check for either id or chunk_id
+      await loadQuestion(nextChunk.chunk_id || nextChunk.id, currentText.value.id)
+      console.log('Next chunk question loaded:', currentQuestion.value) // Debug log
+    } else {
+      console.error('Invalid next chunk data:', nextChunk)
+    }
   } catch (err) {
     if (err.message === 'No more chunks available') {
       alert('You have completed this text!')
       exitReading()
     } else {
       error.value = 'Failed to load next chunk'
-      console.error(err)
+      console.error('Error details:', err)
     }
   } finally {
     isLoading.value = false
@@ -182,6 +165,7 @@ const loadNextChunk = async () => {
 const exitReading = () => {
   currentText.value = null
   currentChunk.value = null
+  currentQuestion.value = ''
 }
 
 onMounted(loadTeachers)
