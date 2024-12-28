@@ -18,7 +18,6 @@ const getAuthHeader = () => {
     console.warn('No auth token found in localStorage')
     return {}
   }
-  console.log('Token being sent:', token) // Debug
   return {
     Authorization: `Bearer ${token}`,
     'Content-Type': 'application/json',
@@ -86,14 +85,22 @@ export const addText = async ({ title, content }) => {
   formData.append('title', title)
   formData.append('content', content)
 
+  const token = localStorage.getItem('token')
+  const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
   const response = await fetch(`${API_URL}/addtext/texts/`, {
     method: 'POST',
-    headers: {
-      ...getAuthHeader(),
-    },
+    headers: headers,
     body: formData,
   })
-  return handleResponse(response)
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    console.error('Server error response:', errorText)
+    throw new Error(errorText)
+  }
+
+  return response.json()
 }
 
 export const deleteText = async (textId) => {

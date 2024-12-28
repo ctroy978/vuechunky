@@ -75,11 +75,12 @@
           class="border rounded-md p-4 flex justify-between items-center"
         >
           <div>
-            <h3 class="font-medium">{{ text.title }}</h3>
+            <h3 class="font-medium">{{ text.title.replace(/<\/?[^>]+(>|$)/g, '') }}</h3>
             <p class="text-sm text-gray-600">
               Added {{ new Date(text.created_at).toLocaleDateString() }}
             </p>
           </div>
+
           <button
             @click="deleteText(text.id)"
             class="text-red-500 hover:text-red-700"
