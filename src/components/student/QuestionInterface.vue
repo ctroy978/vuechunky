@@ -1,6 +1,6 @@
 // src/components/student/QuestionInterface.vue
 <template>
-  <div class="bg-white rounded-lg shadow-md p-6 mt-4" style="margin-left: 200px">
+  <div class="bg-red rounded-lg shadow-md p-6 mt-4" style="margin-left: 200px">
     <div class="mb-6">
       <h3 class="text-lg font-semibold mb-2">Comprehension Question</h3>
       <p class="text-gray-800">{{ question }}</p>
@@ -22,18 +22,20 @@
       {{ error }}
     </div>
 
-    <button
+    <!-- submit BaseButton -->
+    <BaseButton
+      variant="success"
       @click="submitAnswer"
-      class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
       :disabled="isSubmitting || !answerText.trim()"
     >
       {{ isSubmitting ? 'Submitting...' : 'Submit Answer' }}
-    </button>
+    </BaseButton>
   </div>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
+import BaseButton from '@/components/common/BaseButton.vue' // Add this line
 
 const props = defineProps({
   question: {

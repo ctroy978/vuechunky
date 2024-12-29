@@ -43,9 +43,7 @@
 
       <!-- Breadcrumb -->
       <div class="mb-4 text-sm">
-        <button @click="handleExit" class="text-blue-500 hover:text-blue-700">
-          ← Back to texts
-        </button>
+        <BaseButton variant="text" @click="handleExit"> ← Back to texts </BaseButton>
       </div>
 
       <!-- Current Text Info -->
@@ -58,8 +56,12 @@
 
       <!-- Reading Content -->
       <div style="max-width: 65ch">
-        <div class="prose mb-6">
-          <div v-html="chunk.content"></div>
+        <div class="mb-6">
+          <div
+            v-html="chunk.content"
+            class="text-xl leading-relaxed text-gray-900 font-readable max-w-prose"
+            style="max-width: 65ch"
+          ></div>
         </div>
       </div>
     </div>
@@ -75,13 +77,13 @@
 
     <!-- Navigation -->
     <div class="mt-4">
-      <button
+      <BaseButton
+        variant="primary"
         @click="handleNextClick"
-        class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
         :disabled="isLoading || !hasAnsweredQuestion"
       >
         {{ isLoading ? 'Loading...' : 'Next Chunk →' }}
-      </button>
+      </BaseButton>
       <p v-if="!hasAnsweredQuestion" class="text-sm text-gray-600 mt-2">
         Please answer the question before proceeding to the next chunk.
       </p>
@@ -92,6 +94,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import QuestionInterface from './QuestionInterface.vue'
+import BaseButton from '@/components/common/BaseButton.vue'
 
 const props = defineProps({
   text: {

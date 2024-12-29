@@ -30,18 +30,14 @@
 
       <!-- Footer -->
       <div class="modal-footer">
-        <button
-          @click="$emit('close')"
-          class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Close
-        </button>
+        <BaseButton variant="secondary" @click="$emit('close')"> Close </BaseButton>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import BaseButton from '@/components/common/BaseButton.vue'
 defineProps({
   isOpen: {
     type: Boolean,

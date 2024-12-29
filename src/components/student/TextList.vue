@@ -1,10 +1,7 @@
-// src/components/student/TextList.vue
 <template>
   <div class="bg-white rounded-lg shadow-md p-6">
     <div class="mb-4">
-      <button @click="$emit('back')" class="text-blue-500 hover:text-blue-700">
-        ← Back to teachers
-      </button>
+      <BaseButton variant="text" @click="$emit('back')">← Back to teachers</BaseButton>
     </div>
 
     <h2 class="text-xl font-semibold mb-4">Select a Text from {{ teacher.full_name }}</h2>
@@ -15,23 +12,28 @@
       No texts available from this teacher
     </div>
 
-    <div v-else class="space-y-4">
-      <button
+    <!-- Added max-w-2xl to constrain width -->
+    <div v-else class="space-y-4 max-w-2xl">
+      <div
         v-for="text in texts"
         :key="text.id"
-        @click="$emit('select', text)"
-        class="w-full p-4 border rounded-md hover:bg-gray-50 text-left"
+        class="border rounded-md hover:bg-gray-50 transition-colors duration-200"
       >
-        <h3 class="font-medium">{{ text.title.replace(/<\/?[^>]+(>|$)/g, '') }}</h3>
-        <p class="text-sm text-gray-600">
-          Added {{ new Date(text.created_at).toLocaleDateString() }}
-        </p>
-      </button>
+        <button @click="$emit('select', text)" class="p-4 w-full flex flex-col items-start">
+          <h3 class="font-medium text-left text-gray-900">
+            {{ text.title.replace(/<\/?[^>]+(>|$)/g, '') }}
+          </h3>
+          <p class="text-sm text-gray-600 mt-1">
+            Added {{ new Date(text.created_at).toLocaleDateString() }}
+          </p>
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import BaseButton from '@/components/common/BaseButton.vue'
 defineProps({
   teacher: {
     type: Object,
