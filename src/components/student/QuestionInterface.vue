@@ -1,6 +1,6 @@
 // src/components/student/QuestionInterface.vue
 <template>
-  <div class="bg-white rounded-lg shadow-md p-6 mt-4">
+  <div class="bg-white rounded-lg shadow-md p-6 mt-4" style="margin-left: 200px">
     <div class="mb-6">
       <h3 class="text-lg font-semibold mb-2">Comprehension Question</h3>
       <p class="text-gray-800">{{ question }}</p>

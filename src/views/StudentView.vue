@@ -1,4 +1,3 @@
-// src/views/StudentView.vue
 <template>
   <div class="container mx-auto p-4">
     <!-- Header -->
@@ -8,16 +7,42 @@
     </div>
 
     <!-- Reading Interface -->
-    <ReadingInterface
-      v-if="currentChunk"
-      :text="currentText"
-      :chunk="currentChunk"
-      :question="currentQuestion"
-      :isLoading="isLoading"
-      @exit="exitReading"
-      @next="loadNextChunk"
-      @submit-answer="handleAnswerSubmit"
-    />
+    <div v-if="currentChunk">
+      <!-- Review Previous Button -->
+      <div class="flex justify-end mb-4" style="margin-left: 200px">
+        <button
+          @click="
+            () => {
+              console.log('Opening modal, previousChunks:', previousChunks)
+              showReviewModal = true
+            }
+          "
+          class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+          :disabled="previousChunks.length === 0"
+        >
+          Review Previous Chunks
+        </button>
+      </div>
+
+      <ReadingInterface
+        :text="currentText"
+        :chunk="currentChunk"
+        :question="currentQuestion"
+        :isLoading="isLoading"
+        :totalChunks="currentText?.total_chunks || 1"
+        @exit="exitReading"
+        @next="loadNextChunk"
+        @submit-answer="handleAnswerSubmit"
+        @retry="handleRetry"
+      />
+
+      <!-- Review Modal -->
+      <ReviewModal
+        :isOpen="showReviewModal"
+        :previousChunks="previousChunks"
+        @close="showReviewModal = false"
+      />
+    </div>
 
     <!-- Teacher and Text Selection -->
     <template v-else>
@@ -52,6 +77,7 @@ import {
 import TeacherList from '../components/student/TeacherList.vue'
 import TextList from '../components/student/TextList.vue'
 import ReadingInterface from '../components/student/ReadingInterface.vue'
+import ReviewModal from '../components/student/ReviewModal.vue'
 
 // State
 const teachers = ref([])
@@ -62,12 +88,13 @@ const currentChunk = ref(null)
 const currentQuestion = ref('')
 const isLoading = ref(false)
 const error = ref('')
+const showReviewModal = ref(false)
+const previousChunks = ref([])
 
+// Load question for current chunk
 const loadQuestion = async (chunkId, textId) => {
   try {
-    // Handle both id and chunk_id
-    const actualChunkId = typeof chunkId === 'object' ? chunkId.chunk_id || chunkId.id : chunkId
-    const response = await generateQuestion(actualChunkId, textId)
+    const response = await generateQuestion(chunkId, textId)
     console.log('Question loaded:', response) // Debug log
     currentQuestion.value = response.question
   } catch (err) {
@@ -83,6 +110,14 @@ const handleAnswerSubmit = async (answer) => {
   // For now, we'll just console.log the answer
   console.log('Student answer:', answer)
   return true // Simulate successful submission
+}
+
+const handleRetry = async (action) => {
+  if (action === 'next') {
+    await loadNextChunk()
+  } else if (action === 'submit') {
+    // Re-submit last answer if needed
+  }
 }
 
 // Load initial teachers list
@@ -114,6 +149,7 @@ const selectTeacher = async (teacher) => {
 
 const startReading = async (text) => {
   currentText.value = text
+  previousChunks.value = [] // Reset previous chunks
   isLoading.value = true
   try {
     const chunk = await getFirstChunk(text.id)
@@ -131,20 +167,18 @@ const startReading = async (text) => {
   }
 }
 
-// Load next chunk
 const loadNextChunk = async () => {
   if (!currentChunk.value) return
 
   isLoading.value = true
   try {
-    console.log('Current chunk before loading next:', currentChunk.value) // Debug log
-    const nextChunk = await getNextChunk(currentText.value.id, currentChunk.value.chunk_id) // Changed from .id to .chunk_id
-    console.log('Next chunk received:', nextChunk) // Debug log
+    // Store current chunk in previousChunks before loading next
+    previousChunks.value.push({ ...currentChunk.value })
+
+    const nextChunk = await getNextChunk(currentText.value.id, currentChunk.value.chunk_id)
     currentChunk.value = nextChunk
     if (nextChunk && (nextChunk.id || nextChunk.chunk_id)) {
-      // Check for either id or chunk_id
       await loadQuestion(nextChunk.chunk_id || nextChunk.id, currentText.value.id)
-      console.log('Next chunk question loaded:', currentQuestion.value) // Debug log
     } else {
       console.error('Invalid next chunk data:', nextChunk)
     }
@@ -161,11 +195,12 @@ const loadNextChunk = async () => {
   }
 }
 
-// Exit reading mode
 const exitReading = () => {
   currentText.value = null
   currentChunk.value = null
   currentQuestion.value = ''
+  previousChunks.value = []
+  showReviewModal.value = false
 }
 
 onMounted(loadTeachers)
