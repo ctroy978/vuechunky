@@ -1,18 +1,6 @@
 // src/services/api.js
 const API_URL = 'http://localhost:8000'
 
-// // Helper function to handle API responses
-// const handleResponse = async (response) => {
-//   if (!response.ok) {
-//     const error = await response.json().catch(() => ({}))
-//     console.log('API Error Response:', error) // Debug
-//     throw new Error(error.detail || 'API request failed')
-//   }
-//   return response.json()
-// }
-
-// Update this in src/services/api.js
-
 // Helper function to handle API responses
 const handleResponse = async (response) => {
   if (!response.ok) {
@@ -159,17 +147,6 @@ export const getFirstChunk = async (textId) => {
   return handleResponse(response)
 }
 
-// export const getNextChunk = async (textId, currentChunkId) => {
-//   const response = await fetch(`${API_URL}/student/texts/${textId}/next-chunk/${currentChunkId}`, {
-//     headers: {
-//       ...getAuthHeader(),
-//     },
-//   })
-//   return handleResponse(response)
-// }
-
-// Update this in src/services/api.js
-
 export const getNextChunk = async (textId, currentChunkId) => {
   console.log('Getting next chunk with:', { textId, currentChunkId }) // Debug log
   const response = await fetch(`${API_URL}/student/texts/${textId}/next-chunk/${currentChunkId}`, {
@@ -179,9 +156,6 @@ export const getNextChunk = async (textId, currentChunkId) => {
   })
   return handleResponse(response)
 }
-
-//questions
-// Add this to src/services/api.js
 
 export const generateQuestion = async (chunkId, textId) => {
   const response = await fetch(`${API_URL}/questions/generate`, {

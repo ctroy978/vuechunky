@@ -172,8 +172,15 @@ const loadNextChunk = async () => {
 
   isLoading.value = true
   try {
-    // Store current chunk in previousChunks before loading next
-    previousChunks.value.push({ ...currentChunk.value })
+    // Store current chunk in previousChunks before loading next, avoiding duplicates
+    const chunkExists = previousChunks.value.some(
+      (chunk) =>
+        chunk.chunk_id === currentChunk.value.chunk_id ||
+        chunk.sequence_number === currentChunk.value.sequence_number,
+    )
+    if (!chunkExists) {
+      previousChunks.value.push({ ...currentChunk.value })
+    }
 
     const nextChunk = await getNextChunk(currentText.value.id, currentChunk.value.chunk_id)
     currentChunk.value = nextChunk
