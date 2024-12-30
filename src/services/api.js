@@ -157,16 +157,44 @@ export const getNextChunk = async (textId, currentChunkId) => {
   return handleResponse(response)
 }
 
+// Utility function to get user email from JWT token
+const getUserEmailFromToken = () => {
+  const token = localStorage.getItem('token')
+  if (!token) return null
+
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.sub // email is stored in the 'sub' claim
+  } catch (error) {
+    console.error('Error decoding token:', error)
+    return null
+  }
+}
+
+// Updated generateQuestion function
 export const generateQuestion = async (chunkId, textId) => {
+  const userEmail = getUserEmailFromToken()
+  if (!userEmail) {
+    throw new Error('User not authenticated')
+  }
+
   const response = await fetch(`${API_URL}/questions/generate`, {
     method: 'POST',
     headers: {
-      ...getAuthHeader(),
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
     },
     body: JSON.stringify({
       chunk_id: chunkId,
       text_id: textId,
+      user_email: userEmail,
     }),
   })
-  return handleResponse(response)
+
+  if (!response.ok) {
+    console.error('Question generation failed:', await response.text())
+    throw new Error('Failed to generate question')
+  }
+
+  return response.json()
 }
