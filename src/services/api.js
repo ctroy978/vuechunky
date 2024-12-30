@@ -158,7 +158,7 @@ export const getNextChunk = async (textId, currentChunkId) => {
 }
 
 // Utility function to get user email from JWT token
-const getUserEmailFromToken = () => {
+export const getUserEmailFromToken = () => {
   const token = localStorage.getItem('token')
   if (!token) return null
 
@@ -197,4 +197,17 @@ export const generateQuestion = async (chunkId, textId) => {
   }
 
   return response.json()
+}
+
+//submit button for submitting answers
+export const evaluateAnswer = async (answerData) => {
+  const response = await fetch(`${API_URL}/questions/evaluate-answer`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeader(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(answerData),
+  })
+  return handleResponse(response)
 }

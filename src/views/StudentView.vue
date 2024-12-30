@@ -30,9 +30,9 @@
         :question="currentQuestion"
         :isLoading="isLoading"
         :totalChunks="currentText?.total_chunks || 1"
+        :onSubmitAnswer="handleAnswerSubmit"
         @exit="exitReading"
         @next="loadNextChunk"
-        @submit-answer="handleAnswerSubmit"
         @retry="handleRetry"
       />
 
@@ -73,6 +73,8 @@ import {
   getFirstChunk,
   getNextChunk,
   generateQuestion,
+  evaluateAnswer,
+  getUserEmailFromToken,
 } from '../services/api'
 import TeacherList from '../components/student/TeacherList.vue'
 import TextList from '../components/student/TextList.vue'
@@ -95,21 +97,44 @@ const previousChunks = ref([])
 const loadQuestion = async (chunkId, textId) => {
   try {
     const response = await generateQuestion(chunkId, textId)
-    console.log('Question loaded:', response) // Debug log
     currentQuestion.value = response.question
   } catch (err) {
     console.error('Failed to load question:', err)
-    currentQuestion.value = 'What is the main idea of this passage?' // Fallback question
+    currentQuestion.value = 'The AI is not responding properly. Please retry or contact Admin.' // Fallback question
   }
-  console.log('Current question value:', currentQuestion.value) // Debug log
 }
 
-// Handle answer submission
+// StudentView.vue
 const handleAnswerSubmit = async (answer) => {
-  // TODO: Implement answer validation/feedback
-  // For now, we'll just console.log the answer
-  console.log('Student answer:', answer)
-  return true // Simulate successful submission
+  const timestamp = Date.now()
+  console.log(`StudentView: handleAnswerSubmit called at ${timestamp}`)
+
+  // Add loading state guard
+  if (isLoading.value) {
+    console.log('StudentView: Prevented duplicate submission')
+    return false
+  }
+
+  isLoading.value = true
+
+  try {
+    const response = await evaluateAnswer({
+      chunk_id: currentChunk.value.chunk_id,
+      text_id: currentText.value.id,
+      user_email: getUserEmailFromToken(),
+      answer: answer,
+      current_question: currentQuestion.value,
+    })
+    return response.can_proceed
+  } catch (err) {
+    console.error('Error evaluating answer:', err)
+    return false
+  } finally {
+    // Add slight delay before clearing loading state
+    setTimeout(() => {
+      isLoading.value = false
+    }, 100)
+  }
 }
 
 const handleRetry = async (action) => {
@@ -203,6 +228,14 @@ const loadNextChunk = async () => {
 }
 
 const exitReading = () => {
+  // Show confirmation only if user hasn't answered current question
+  if (
+    currentChunk.value &&
+    !confirm('Are you sure you want to exit? Your progress on this chunk will be lost.')
+  ) {
+    return
+  }
+
   currentText.value = null
   currentChunk.value = null
   currentQuestion.value = ''

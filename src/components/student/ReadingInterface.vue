@@ -66,12 +66,11 @@
       </div>
     </div>
 
-    <!-- Question Interface -->
     <QuestionInterface
       :key="chunk.chunk_id"
       :question="question || 'Loading question...'"
       :isSubmitting="isSubmittingAnswer"
-      @submit="handleAnswerSubmit"
+      :onSubmit="handleAnswerSubmit"
       :error="questionError"
     />
 
@@ -138,18 +137,45 @@ watch(
   },
 )
 
+// const handleAnswerSubmit = async (answer) => {
+//   isSubmittingAnswer.value = true
+//   questionError.value = ''
+//   lastAction.value = 'submit'
+
+//   try {
+//     await emit('submit-answer', answer)
+//     hasAnsweredQuestion.value = true
+//   } catch (err) {
+//     questionError.value = 'Failed to submit answer. Please try again.'
+//   } finally {
+//     isSubmittingAnswer.value = false
+//   }
+// }
+
+// ReadingInterface.vue
 const handleAnswerSubmit = async (answer) => {
+  console.log('ReadingInterface: handleAnswerSubmit called', Date.now())
+
+  // Add submission guard
+  if (isSubmittingAnswer.value) {
+    console.log('ReadingInterface: Prevented duplicate submission')
+    return
+  }
+
   isSubmittingAnswer.value = true
   questionError.value = ''
   lastAction.value = 'submit'
 
   try {
-    await emit('submit-answer', answer)
-    hasAnsweredQuestion.value = true
+    // Change to single emit without await
+    emit('submit-answer', answer)
   } catch (err) {
     questionError.value = 'Failed to submit answer. Please try again.'
   } finally {
-    isSubmittingAnswer.value = false
+    // Add slight delay before allowing new submissions
+    setTimeout(() => {
+      isSubmittingAnswer.value = false
+    }, 100)
   }
 }
 
@@ -162,12 +188,14 @@ const handleNextClick = () => {
 }
 
 const handleExit = () => {
-  if (
-    hasAnsweredQuestion.value ||
-    confirm('Are you sure you want to exit? Your progress on this chunk will be lost.')
-  ) {
+  // If they've answered the question, just exit without confirmation
+  if (hasAnsweredQuestion.value) {
     emit('exit')
+    return
   }
+
+  // Otherwise emit exit - the parent component can handle confirmation if needed
+  emit('exit')
 }
 
 const retryLastAction = () => {

@@ -1,4 +1,3 @@
-// src/components/student/QuestionInterface.vue
 <template>
   <div class="bg-red rounded-lg shadow-md p-6 mt-4" style="margin-left: 200px">
     <div class="mb-6">
@@ -14,7 +13,7 @@
         rows="4"
         class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         placeholder="Type your answer here..."
-        :disabled="isSubmitting"
+        :disabled="props.isSubmitting"
       ></textarea>
     </div>
 
@@ -22,20 +21,19 @@
       {{ error }}
     </div>
 
-    <!-- submit BaseButton -->
     <BaseButton
       variant="success"
-      @click="submitAnswer"
-      :disabled="isSubmitting || !answerText.trim()"
+      @mousedown.prevent="debouncedSubmit"
+      :disabled="props.isSubmitting || !answerText.trim()"
     >
-      {{ isSubmitting ? 'Submitting...' : 'Submit Answer' }}
+      {{ props.isSubmitting ? 'Submitting...' : 'Submit Answer' }}
     </BaseButton>
   </div>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
-import BaseButton from '@/components/common/BaseButton.vue' // Add this line
+import BaseButton from '@/components/common/BaseButton.vue'
 
 const props = defineProps({
   question: {
@@ -52,14 +50,35 @@ const emit = defineEmits(['submit'])
 
 const answerText = ref('')
 const error = ref('')
+const localSubmitting = ref(false)
 
-const submitAnswer = () => {
-  if (!answerText.value.trim()) {
-    error.value = 'Please provide an answer'
+// Create a debounced submit function
+const debouncedSubmit = (e) => {
+  // Immediately prevent default behavior
+  e?.preventDefault()
+
+  console.log('QuestionInterface: submitAnswer called', Date.now())
+
+  if (localSubmitting.value) {
+    console.log('QuestionInterface: Prevented duplicate submission')
     return
   }
+
+  localSubmitting.value = true
+
+  if (!answerText.value.trim()) {
+    error.value = 'Please provide an answer'
+    localSubmitting.value = false
+    return
+  }
+
   error.value = ''
   emit('submit', answerText.value)
+
+  // Longer delay to ensure we don't get bounced clicks
+  setTimeout(() => {
+    localSubmitting.value = false
+  }, 250)
 }
 
 // Reset answer when question changes
