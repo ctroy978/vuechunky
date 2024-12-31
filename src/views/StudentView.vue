@@ -30,6 +30,7 @@
         :question="currentQuestion"
         :isLoading="isLoading"
         :totalChunks="currentText?.total_chunks || 1"
+        :hasAnsweredQuestion="hasAnsweredQuestion"
         :onSubmitAnswer="handleAnswerSubmit"
         @exit="exitReading"
         @next="loadNextChunk"
@@ -92,6 +93,10 @@ const isLoading = ref(false)
 const error = ref('')
 const showReviewModal = ref(false)
 const previousChunks = ref([])
+const hasAnsweredQuestion = ref(false) // Add this line here
+
+//emit to readinginterface
+const emit = defineEmits(['updateHasAnsweredQuestion'])
 
 // Load question for current chunk
 const loadQuestion = async (chunkId, textId) => {
@@ -104,15 +109,9 @@ const loadQuestion = async (chunkId, textId) => {
   }
 }
 
-// StudentView.vue
 const handleAnswerSubmit = async (answer) => {
-  const timestamp = Date.now()
-  console.log(`StudentView: handleAnswerSubmit called at ${timestamp}`)
-
-  // Add loading state guard
   if (isLoading.value) {
-    console.log('StudentView: Prevented duplicate submission')
-    return false
+    return { can_proceed: false }
   }
 
   isLoading.value = true
@@ -125,12 +124,22 @@ const handleAnswerSubmit = async (answer) => {
       answer: answer,
       current_question: currentQuestion.value,
     })
-    return response.can_proceed
+
+    // If we get a new question in the response, update it
+    if (!response.can_proceed && response.question) {
+      currentQuestion.value = response.question
+    }
+
+    hasAnsweredQuestion.value = response.can_proceed
+
+    return response
   } catch (err) {
     console.error('Error evaluating answer:', err)
-    return false
+    return {
+      can_proceed: false,
+      message: 'Failed to evaluate answer. Please try again.',
+    }
   } finally {
-    // Add slight delay before clearing loading state
     setTimeout(() => {
       isLoading.value = false
     }, 100)
@@ -175,6 +184,7 @@ const selectTeacher = async (teacher) => {
 const startReading = async (text) => {
   currentText.value = text
   previousChunks.value = [] // Reset previous chunks
+  hasAnsweredQuestion.value = false
   isLoading.value = true
   try {
     const chunk = await getFirstChunk(text.id)
@@ -194,7 +204,7 @@ const startReading = async (text) => {
 
 const loadNextChunk = async () => {
   if (!currentChunk.value) return
-
+  hasAnsweredQuestion.value = false
   isLoading.value = true
   try {
     // Store current chunk in previousChunks before loading next, avoiding duplicates
@@ -241,6 +251,7 @@ const exitReading = () => {
   currentQuestion.value = ''
   previousChunks.value = []
   showReviewModal.value = false
+  hasAnsweredQuestion.value = false // Add this line
 }
 
 onMounted(loadTeachers)

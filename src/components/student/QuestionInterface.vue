@@ -57,8 +57,6 @@ const debouncedSubmit = (e) => {
   // Immediately prevent default behavior
   e?.preventDefault()
 
-  console.log('QuestionInterface: submitAnswer called', Date.now())
-
   if (localSubmitting.value) {
     console.log('QuestionInterface: Prevented duplicate submission')
     return

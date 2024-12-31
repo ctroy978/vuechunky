@@ -116,12 +116,15 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  hasAnsweredQuestion: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['exit', 'next', 'submit-answer', 'retry'])
 
 const isSubmittingAnswer = ref(false)
-const hasAnsweredQuestion = ref(false)
 const error = ref('')
 const questionError = ref('')
 const lastAction = ref(null)
@@ -130,27 +133,11 @@ const lastAction = ref(null)
 watch(
   () => props.chunk.chunk_id,
   () => {
-    hasAnsweredQuestion.value = false
     error.value = ''
     questionError.value = ''
     console.log('Reset states for new chunk')
   },
 )
-
-// const handleAnswerSubmit = async (answer) => {
-//   isSubmittingAnswer.value = true
-//   questionError.value = ''
-//   lastAction.value = 'submit'
-
-//   try {
-//     await emit('submit-answer', answer)
-//     hasAnsweredQuestion.value = true
-//   } catch (err) {
-//     questionError.value = 'Failed to submit answer. Please try again.'
-//   } finally {
-//     isSubmittingAnswer.value = false
-//   }
-// }
 
 // ReadingInterface.vue
 const handleAnswerSubmit = async (answer) => {
@@ -180,7 +167,7 @@ const handleAnswerSubmit = async (answer) => {
 }
 
 const handleNextClick = () => {
-  if (hasAnsweredQuestion.value) {
+  if (props.hasAnsweredQuestion) {
     error.value = ''
     lastAction.value = 'next'
     emit('next')
@@ -189,7 +176,7 @@ const handleNextClick = () => {
 
 const handleExit = () => {
   // If they've answered the question, just exit without confirmation
-  if (hasAnsweredQuestion.value) {
+  if (props.hasAnsweredQuestion) {
     emit('exit')
     return
   }
