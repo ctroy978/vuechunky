@@ -28,6 +28,13 @@ const routes = [
     component: () => import('../views/StudentView.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/test/:textId',
+    name: 'test',
+    component: () => import('../views/TestView.vue'),
+    props: true,
+    meta: { requiresAuth: true },
+  },
 ]
 
 const router = createRouter({

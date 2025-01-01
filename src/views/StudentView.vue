@@ -68,6 +68,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   getTeachers,
   getTeacherTextsForStudent,
@@ -94,6 +95,7 @@ const error = ref('')
 const showReviewModal = ref(false)
 const previousChunks = ref([])
 const hasAnsweredQuestion = ref(false) // Add this line here
+const router = useRouter()
 
 //emit to readinginterface
 const emit = defineEmits(['updateHasAnsweredQuestion'])
@@ -124,11 +126,6 @@ const handleAnswerSubmit = async (answer) => {
       answer: answer,
       current_question: currentQuestion.value,
     })
-
-    // If we get a new question in the response, update it
-    //if (!response.can_proceed && response.question) {
-    //currentQuestion.value = `${response.message}\n\n${response.question}`
-    //}
 
     // If we get a response, format it appropriately
     if (response.message) {
@@ -209,6 +206,8 @@ const startReading = async (text) => {
   }
 }
 
+// In StudentView.vue, modify this section:
+
 const loadNextChunk = async () => {
   if (!currentChunk.value) return
   hasAnsweredQuestion.value = false
@@ -233,8 +232,13 @@ const loadNextChunk = async () => {
     }
   } catch (err) {
     if (err.message === 'No more chunks available') {
-      alert('You have completed this text!')
-      exitReading()
+      // Remove the textTitle parameter here
+      router.push({
+        name: 'test',
+        params: {
+          textId: currentText.value.id,
+        },
+      })
     } else {
       error.value = 'Failed to load next chunk'
       console.error('Error details:', err)

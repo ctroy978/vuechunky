@@ -211,3 +211,55 @@ export const evaluateAnswer = async (answerData) => {
   })
   return handleResponse(response)
 }
+
+// Add to src/services/api.js
+
+export const generateTest = async (textId) => {
+  try {
+    const response = await fetch(`${API_URL}/test/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ text_id: textId }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Server error response:', errorText)
+      throw new Error(errorText || `Failed to generate test (${response.status})`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error generating test:', error)
+    throw error
+  }
+}
+
+export const submitTest = async (textId, answers) => {
+  try {
+    const response = await fetch(`${API_URL}/test/submit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({
+        text_id: textId,
+        answers: answers,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(errorText || 'Failed to submit test')
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error submitting test:', error)
+    throw error
+  }
+}
