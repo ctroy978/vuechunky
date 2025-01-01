@@ -126,8 +126,15 @@ const handleAnswerSubmit = async (answer) => {
     })
 
     // If we get a new question in the response, update it
-    if (!response.can_proceed && response.question) {
+    //if (!response.can_proceed && response.question) {
+    //currentQuestion.value = `${response.message}\n\n${response.question}`
+    //}
+
+    // If we get a response, format it appropriately
+    if (response.message) {
       currentQuestion.value = response.question
+        ? `Feedback: ${response.message}\n\nAnswer the Following: ${response.question}`
+        : `Feedback: ${response.message}`
     }
 
     hasAnsweredQuestion.value = response.can_proceed
