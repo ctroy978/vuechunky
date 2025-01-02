@@ -44,6 +44,11 @@ const routes = [
     props: true,
     meta: { requiresAuth: true },
   },
+  {
+    path: '/register',
+    name: 'register',
+    component: () => import('@/views/RegisterView.vue'),
+  },
 ]
 
 const router = createRouter({
