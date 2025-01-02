@@ -116,10 +116,10 @@ const loadQuestions = async () => {
   try {
     const response = await generateTest(textId.value)
     questions.value = response.questions
-    // Initialize answers object
+    // Initialize answers with string IDs
     questions.value.forEach((q) => {
-      if (!answers.value[q.id]) {
-        answers.value[q.id] = ''
+      if (!answers.value[q.id.toString()]) {
+        answers.value[q.id.toString()] = ''
       }
     })
   } catch (err) {
@@ -130,18 +130,26 @@ const loadQuestions = async () => {
   }
 }
 
+// In TestView.vue
+// In TestView.vue, update handleSubmit path:
 const handleSubmit = async () => {
   if (!isAllAnswered.value) return
 
   isSubmitting.value = true
   try {
     const result = await submitTest(textId.value, answers.value)
-    console.log('Test submitted successfully:', result)
-    // Here you could add logic to show results or redirect
-    router.push('/student') // Or wherever you want to redirect after submission
+    localStorage.setItem(
+      'testResults',
+      JSON.stringify({
+        feedback: result.feedback,
+        correct: result.correct,
+        incorrect: result.incorrect,
+        questionsAndAnswers: result.questions_and_answers,
+      }),
+    )
+    router.push(`/test-results/${textId.value}`) // Add textId parameter
   } catch (err) {
     error.value = 'Failed to submit test. Please try again.'
-    console.error('Error submitting test:', err)
   } finally {
     isSubmitting.value = false
   }
