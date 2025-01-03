@@ -1,3 +1,4 @@
+// src/views/TestView.vue
 <template>
   <div class="container mx-auto p-4">
     <div class="mb-8">
@@ -45,8 +46,8 @@
               {{ index + 1 }}. {{ question.question }}
             </label>
             <textarea
-              :id="'question-' + question.id"
-              v-model="answers[question.id]"
+              :id="'question-' + index"
+              v-model="answersList[index]"
               rows="4"
               maxlength="600"
               class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -84,7 +85,7 @@ const route = useRoute()
 const router = useRouter()
 
 const questions = ref([])
-const answers = ref([])
+const answersList = ref([]) // Changed name to be more explicit
 const isLoading = ref(true)
 const isSubmitting = ref(false)
 const error = ref('')
@@ -93,7 +94,7 @@ const textTitle = ref('')
 const textId = computed(() => Number(route.params.textId))
 
 const isAllAnswered = computed(() => {
-  return answers.value.every((answer) => answer?.trim().length > 0)
+  return answersList.value.every((answer) => answer?.trim().length > 0)
 })
 
 const loadQuestions = async () => {
@@ -103,7 +104,10 @@ const loadQuestions = async () => {
   try {
     const response = await generateTest(textId.value)
     questions.value = response.questions
-    answers.value = new Array(response.questions.length).fill('')
+    // Create a new reactive array with independent strings
+    answersList.value = Array(response.questions.length)
+      .fill()
+      .map(() => '')
   } catch (err) {
     error.value = 'Failed to load test questions. Please try again.'
     console.error('Error loading questions:', err)
@@ -117,7 +121,7 @@ const handleSubmit = async () => {
 
   isSubmitting.value = true
   try {
-    const result = await submitTest(textId.value, answers.value)
+    const result = await submitTest(textId.value, answersList.value)
     localStorage.setItem(
       'testResults',
       JSON.stringify({
