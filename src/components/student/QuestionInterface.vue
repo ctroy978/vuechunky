@@ -11,6 +11,7 @@
         id="answer"
         v-model="answerText"
         rows="4"
+        maxlength="600"
         class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         placeholder="Type your answer here..."
         :disabled="props.isSubmitting"

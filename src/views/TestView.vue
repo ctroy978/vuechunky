@@ -45,9 +45,10 @@
               {{ index + 1 }}. {{ question.question }}
             </label>
             <textarea
-              :id="'question-' + index"
-              v-model="answers[index]"
+              :id="'question-' + question.id"
+              v-model="answers[question.id]"
               rows="4"
+              maxlength="600"
               class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               :placeholder="'Enter your answer for question ' + (index + 1)"
             ></textarea>
