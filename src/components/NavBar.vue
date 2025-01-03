@@ -96,7 +96,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   Menu as MenuIcon,
@@ -116,6 +116,15 @@ const userData = ref({
 })
 
 const currentRoute = computed(() => route.path)
+
+// Added: Watch for changes in localStorage
+const setupStorageListener = () => {
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'token') {
+      checkAuthStatus()
+    }
+  })
+}
 
 const checkAuthStatus = () => {
   const token = localStorage.getItem('token')
@@ -155,6 +164,14 @@ const handleLogout = () => {
   router.push('/login')
 }
 
+// Added: Watch for route changes
+watch(
+  () => route.path,
+  () => {
+    checkAuthStatus()
+  },
+)
+
 const getLinkClasses = (path) => {
   const baseClasses = 'px-3 py-2 transition-colors duration-200'
   const isActive = currentRoute.value === path
@@ -173,8 +190,8 @@ const getMobileLinkClasses = (path) => {
     : `${baseClasses} text-gray-700 hover:text-blue-600 hover:bg-gray-50`
 }
 
-// Check auth status when component mounts
 onMounted(() => {
   checkAuthStatus()
+  setupStorageListener()
 })
 </script>

@@ -171,32 +171,39 @@ export const getUserEmailFromToken = () => {
   }
 }
 
-// Updated generateQuestion function
 export const generateQuestion = async (chunkId, textId) => {
   const userEmail = getUserEmailFromToken()
   if (!userEmail) {
     throw new Error('User not authenticated')
   }
 
-  const response = await fetch(`${API_URL}/questions/generate`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    },
-    body: JSON.stringify({
-      chunk_id: chunkId,
-      text_id: textId,
-      user_email: userEmail,
-    }),
-  })
+  try {
+    const response = await fetch(`${API_URL}/questions/generate`, {
+      method: 'POST',
+      credentials: 'include', // Add this line
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+        accept: 'application/json',
+      },
+      body: JSON.stringify({
+        chunk_id: chunkId,
+        text_id: textId,
+        user_email: userEmail,
+      }),
+    })
 
-  if (!response.ok) {
-    console.error('Question generation failed:', await response.text())
-    throw new Error('Failed to generate question')
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Question generation failed:', errorText)
+      throw new Error('Failed to generate question')
+    }
+
+    return response.json()
+  } catch (error) {
+    console.error('Error in generateQuestion:', error)
+    throw error
   }
-
-  return response.json()
 }
 
 //submit button for submitting answers
@@ -212,15 +219,15 @@ export const evaluateAnswer = async (answerData) => {
   return handleResponse(response)
 }
 
-// Add to src/services/api.js
-
 export const generateTest = async (textId) => {
   try {
     const response = await fetch(`${API_URL}/test/generate`, {
       method: 'POST',
+      credentials: 'include', // Add this
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${localStorage.getItem('token')}`,
+        accept: 'application/json',
       },
       body: JSON.stringify({ text_id: textId }),
     })
@@ -237,13 +244,14 @@ export const generateTest = async (textId) => {
     throw error
   }
 }
-
 export const submitTest = async (textId, answers) => {
   const response = await fetch(`${API_URL}/test/submit`, {
     method: 'POST',
+    credentials: 'include', // Add this
     headers: {
       ...getAuthHeader(),
       'Content-Type': 'application/json',
+      accept: 'application/json',
     },
     body: JSON.stringify({
       text_id: textId,

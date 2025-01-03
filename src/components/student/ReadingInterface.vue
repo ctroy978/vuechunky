@@ -54,6 +54,11 @@
         <p class="text-gray-600">Chunk {{ chunk.sequence_number }} of {{ totalChunks }}</p>
       </div>
 
+      <!-- Add Dictionary Note Here -->
+      <div class="mb-4 p-2 bg-blue-50 text-blue-700 rounded-md text-sm">
+        <p>💡 Need help with a word? Double-click any word to see its definition.</p>
+      </div>
+
       <!-- Reading Content -->
       <div style="max-width: 65ch">
         <div class="mb-6">
@@ -65,6 +70,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Add the Dictionary Lookup component -->
+    <DictionaryLookup />
 
     <QuestionInterface
       :key="chunk.chunk_id"
@@ -94,6 +102,7 @@
 import { ref, watch } from 'vue'
 import QuestionInterface from './QuestionInterface.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
+import DictionaryLookup from '@/components/common/DictionaryLookup.vue'
 
 const props = defineProps({
   text: {

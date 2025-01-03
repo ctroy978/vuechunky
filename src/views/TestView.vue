@@ -1,19 +1,15 @@
-// src/views/TestView.vue
 <template>
   <div class="container mx-auto p-4">
-    <!-- Header -->
     <div class="mb-8">
       <h1 class="text-2xl font-bold text-gray-800">Final Comprehension Test</h1>
       <h2 class="text-lg text-gray-600 mt-2">{{ textTitle }}</h2>
       <div class="border-blue-500 border-b-2 w-32 mt-2"></div>
     </div>
 
-    <!-- Loading State -->
     <div v-if="isLoading" class="text-center py-8">
       <p class="text-gray-600">Loading test questions...</p>
     </div>
 
-    <!-- Error State -->
     <div v-if="error" class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
       <div class="flex">
         <div class="flex-shrink-0">
@@ -37,25 +33,20 @@
       </div>
     </div>
 
-    <!-- Test Questions -->
     <div v-if="!isLoading && !error && questions.length > 0" class="max-w-2xl mx-auto">
       <form @submit.prevent="handleSubmit" class="space-y-8">
-        <!-- Questions -->
         <div
           v-for="(question, index) in questions"
-          :key="question.id"
+          :key="question.sequence"
           class="bg-white rounded-lg shadow-md p-6"
         >
           <div class="mb-4">
-            <label
-              :for="'question-' + question.id"
-              class="block text-lg font-medium text-gray-900 mb-3"
-            >
+            <label :for="'question-' + index" class="block text-lg font-medium text-gray-900 mb-3">
               {{ index + 1 }}. {{ question.question }}
             </label>
             <textarea
-              :id="'question-' + question.id"
-              v-model="answers[question.id]"
+              :id="'question-' + index"
+              v-model="answers[index]"
               rows="4"
               class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               :placeholder="'Enter your answer for question ' + (index + 1)"
@@ -63,7 +54,6 @@
           </div>
         </div>
 
-        <!-- Submit Button -->
         <div class="flex justify-center mt-8">
           <BaseButton
             type="submit"
@@ -77,7 +67,6 @@
       </form>
     </div>
 
-    <!-- No Questions State -->
     <div v-if="!isLoading && !error && questions.length === 0" class="text-center py-8">
       <p class="text-gray-600">No test questions available.</p>
     </div>
@@ -93,22 +82,19 @@ import { generateTest, submitTest } from '../services/api'
 const route = useRoute()
 const router = useRouter()
 
-// State
 const questions = ref([])
-const answers = ref({})
+const answers = ref([])
 const isLoading = ref(true)
 const isSubmitting = ref(false)
 const error = ref('')
 const textTitle = ref('')
 
-// Computed
 const textId = computed(() => Number(route.params.textId))
 
 const isAllAnswered = computed(() => {
-  return questions.value.every((q) => answers.value[q.id]?.trim().length > 0)
+  return answers.value.every((answer) => answer?.trim().length > 0)
 })
 
-// Methods
 const loadQuestions = async () => {
   isLoading.value = true
   error.value = ''
@@ -116,12 +102,7 @@ const loadQuestions = async () => {
   try {
     const response = await generateTest(textId.value)
     questions.value = response.questions
-    // Initialize answers with string IDs
-    questions.value.forEach((q) => {
-      if (!answers.value[q.id.toString()]) {
-        answers.value[q.id.toString()] = ''
-      }
-    })
+    answers.value = new Array(response.questions.length).fill('')
   } catch (err) {
     error.value = 'Failed to load test questions. Please try again.'
     console.error('Error loading questions:', err)
@@ -130,8 +111,6 @@ const loadQuestions = async () => {
   }
 }
 
-// In TestView.vue
-// In TestView.vue, update handleSubmit path:
 const handleSubmit = async () => {
   if (!isAllAnswered.value) return
 
@@ -147,7 +126,7 @@ const handleSubmit = async () => {
         questionsAndAnswers: result.questions_and_answers,
       }),
     )
-    router.push(`/test-results/${textId.value}`) // Add textId parameter
+    router.push(`/test-results/${textId.value}`)
   } catch (err) {
     error.value = 'Failed to submit test. Please try again.'
   } finally {
@@ -155,10 +134,8 @@ const handleSubmit = async () => {
   }
 }
 
-// Lifecycle hooks
 onMounted(async () => {
   try {
-    // First try to load questions
     await loadQuestions()
   } catch (err) {
     console.error('Error in initial load:', err)
