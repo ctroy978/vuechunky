@@ -7,6 +7,7 @@ import TeacherView from '../views/TeacherView.vue'
 import TeacherCompletionsView from '../views/TeacherCompletionsView.vue'
 import TestView from '../views/TestView.vue'
 import TestResultView from '../views/TestResultView.vue'
+import AdminView from '../views/AdminView.vue'
 
 // Helper function to check if user is logged in
 const isAuthenticated = () => {
@@ -22,6 +23,20 @@ const isTeacher = () => {
     return payload.is_teacher === true
   } catch (error) {
     console.error('Error checking teacher status:', error)
+    return false
+  }
+}
+
+// Helper function to check if user is admin
+const isAdmin = () => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return false
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    // Use the admin_privilege field from the token
+    return !!payload.admin_privilege
+  } catch (error) {
+    console.error('Error checking admin status:', error)
     return false
   }
 }
@@ -83,6 +98,18 @@ const routes = [
     component: TestResultView,
     meta: { requiresAuth: true },
   },
+  {
+    path: '/admin',
+    name: 'admin',
+    component: AdminView,
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/users',
+    name: 'admin-users',
+    component: () => import('../views/AdminUsersView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
 ]
 
 const router = createRouter({
@@ -112,6 +139,13 @@ router.beforeEach((to, from, next) => {
     if (to.matched.some((record) => record.meta.requiresTeacher)) {
       if (!isTeacher()) {
         next({ path: '/' }) // Redirect to home if not a teacher
+        return
+      }
+    }
+    // Check if route requires admin role
+    if (to.matched.some((record) => record.meta.requiresAdmin)) {
+      if (!isAdmin()) {
+        next({ path: '/' }) // Redirect to home if not an admin
         return
       }
     }

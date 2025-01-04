@@ -301,3 +301,57 @@ export const getCompletionsByText = async (textId, skip = 0, limit = 100) => {
   )
   return handleResponse(response)
 }
+
+// Admin endpoints
+export const getUsers = async () => {
+  const response = await fetch(`${API_URL}/admin/users`, {
+    headers: {
+      ...getAuthHeader(),
+    },
+  })
+  return handleResponse(response)
+}
+
+export const grantAdminPrivileges = async (userId, reason) => {
+  const response = await fetch(`${API_URL}/admin/grant-admin`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeader(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      user_id: userId,
+      reason: reason,
+    }),
+  })
+  return handleResponse(response)
+}
+
+export const revokeAdminPrivileges = async (userId) => {
+  const response = await fetch(`${API_URL}/admin/revoke-admin/${userId}`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeader(),
+    },
+  })
+  return handleResponse(response)
+}
+
+export const toggleTeacherStatus = async (userId) => {
+  const response = await fetch(`${API_URL}/admin/toggle-teacher/${userId}`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeader(),
+    },
+  })
+  return handleResponse(response)
+}
+export const deleteUser = async (userId) => {
+  const response = await fetch(`${API_URL}/admin/users/${userId}`, {
+    method: 'DELETE',
+    headers: {
+      ...getAuthHeader(),
+    },
+  })
+  return handleResponse(response)
+}
