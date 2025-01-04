@@ -23,6 +23,18 @@
             <router-link to="/student" :class="getLinkClasses('/student')">
               Student View
             </router-link>
+            <!-- New Teacher Links Section -->
+            <template v-if="userData.is_teacher">
+              <router-link to="/teacher" :class="getLinkClasses('/teacher')">
+                Teacher View
+              </router-link>
+              <router-link
+                to="/teacher/completions"
+                :class="getLinkClasses('/teacher/completions')"
+              >
+                Completions
+              </router-link>
+            </template>
             <div class="flex items-center space-x-2 text-gray-700 px-3 py-2">
               <UserIcon class="w-5 h-5" />
               <span>{{ userData.full_name || userData.username }}</span>
@@ -72,6 +84,18 @@
           <router-link to="/student" :class="getMobileLinkClasses('/student')">
             Student View
           </router-link>
+          <!-- New Teacher Links Section -->
+          <template v-if="userData.is_teacher">
+            <router-link to="/teacher" :class="getMobileLinkClasses('/teacher')">
+              Teacher View
+            </router-link>
+            <router-link
+              to="/teacher/completions"
+              :class="getMobileLinkClasses('/teacher/completions')"
+            >
+              Completions
+            </router-link>
+          </template>
           <div class="flex items-center space-x-2 text-gray-700 px-3 py-2">
             <UserIcon class="w-5 h-5" />
             <span>{{ userData.full_name || userData.username }}</span>
@@ -146,6 +170,7 @@ const checkAuthStatus = () => {
       username: payload.username || '',
       email: payload.sub || '',
       full_name: payload.full_name || '',
+      is_teacher: payload.is_teacher || false,
     }
   } catch (error) {
     console.error('Error decoding token:', error)
