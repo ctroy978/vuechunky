@@ -247,16 +247,57 @@ export const generateTest = async (textId) => {
 export const submitTest = async (textId, answers) => {
   const response = await fetch(`${API_URL}/test/submit`, {
     method: 'POST',
-    credentials: 'include', // Add this
     headers: {
       ...getAuthHeader(),
       'Content-Type': 'application/json',
-      accept: 'application/json',
     },
     body: JSON.stringify({
       text_id: textId,
-      answers: answers,
+      answers: answers, // Now sending the structured answers array with sequence and question
     }),
   })
+  return handleResponse(response)
+}
+
+// Add to src/services/api.js
+
+export const getCompletions = async (params = {}) => {
+  // Convert params to URL search params
+  const searchParams = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== null && value !== undefined) {
+      searchParams.append(key, value)
+    }
+  })
+
+  const response = await fetch(`${API_URL}/completions?${searchParams.toString()}`, {
+    headers: {
+      ...getAuthHeader(),
+    },
+  })
+  return handleResponse(response)
+}
+
+export const getCompletionsByStudent = async (studentName, skip = 0, limit = 100) => {
+  const response = await fetch(
+    `${API_URL}/completions/by-student/${encodeURIComponent(studentName)}?skip=${skip}&limit=${limit}`,
+    {
+      headers: {
+        ...getAuthHeader(),
+      },
+    },
+  )
+  return handleResponse(response)
+}
+
+export const getCompletionsByText = async (textId, skip = 0, limit = 100) => {
+  const response = await fetch(
+    `${API_URL}/completions/by-text/${textId}?skip=${skip}&limit=${limit}`,
+    {
+      headers: {
+        ...getAuthHeader(),
+      },
+    },
+  )
   return handleResponse(response)
 }

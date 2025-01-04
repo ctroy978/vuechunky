@@ -1,4 +1,3 @@
-// src/views/TestView.vue
 <template>
   <div class="container mx-auto p-4">
     <div class="mb-8">
@@ -37,21 +36,24 @@
     <div v-if="!isLoading && !error && questions.length > 0" class="max-w-2xl mx-auto">
       <form @submit.prevent="handleSubmit" class="space-y-8">
         <div
-          v-for="(question, index) in questions"
+          v-for="question in questions"
           :key="question.sequence"
           class="bg-white rounded-lg shadow-md p-6"
         >
           <div class="mb-4">
-            <label :for="'question-' + index" class="block text-lg font-medium text-gray-900 mb-3">
-              {{ index + 1 }}. {{ question.question }}
+            <label
+              :for="'question-' + question.sequence"
+              class="block text-lg font-medium text-gray-900 mb-3"
+            >
+              {{ question.sequence }}. {{ question.question }}
             </label>
             <textarea
-              :id="'question-' + index"
-              v-model="answersList[index]"
+              :id="'question-' + question.sequence"
+              v-model="answersMap[question.sequence]"
               rows="4"
               maxlength="600"
               class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              :placeholder="'Enter your answer for question ' + (index + 1)"
+              :placeholder="'Enter your answer for question ' + question.sequence"
             ></textarea>
           </div>
         </div>
@@ -85,7 +87,7 @@ const route = useRoute()
 const router = useRouter()
 
 const questions = ref([])
-const answersList = ref([]) // Changed name to be more explicit
+const answersMap = ref({})
 const isLoading = ref(true)
 const isSubmitting = ref(false)
 const error = ref('')
@@ -94,7 +96,7 @@ const textTitle = ref('')
 const textId = computed(() => Number(route.params.textId))
 
 const isAllAnswered = computed(() => {
-  return answersList.value.every((answer) => answer?.trim().length > 0)
+  return questions.value.every((q) => answersMap.value[q.sequence]?.trim().length > 0)
 })
 
 const loadQuestions = async () => {
@@ -104,10 +106,11 @@ const loadQuestions = async () => {
   try {
     const response = await generateTest(textId.value)
     questions.value = response.questions
-    // Create a new reactive array with independent strings
-    answersList.value = Array(response.questions.length)
-      .fill()
-      .map(() => '')
+    // Initialize answersMap with empty strings for each question
+    answersMap.value = response.questions.reduce((acc, q) => {
+      acc[q.sequence] = ''
+      return acc
+    }, {})
   } catch (err) {
     error.value = 'Failed to load test questions. Please try again.'
     console.error('Error loading questions:', err)
@@ -121,7 +124,14 @@ const handleSubmit = async () => {
 
   isSubmitting.value = true
   try {
-    const result = await submitTest(textId.value, answersList.value)
+    // Convert answersMap to ordered array with question data
+    const orderedAnswers = questions.value.map((q) => ({
+      sequence: q.sequence,
+      question: q.question,
+      answer: answersMap.value[q.sequence],
+    }))
+
+    const result = await submitTest(textId.value, orderedAnswers)
     localStorage.setItem(
       'testResults',
       JSON.stringify({
@@ -134,16 +144,11 @@ const handleSubmit = async () => {
     router.push(`/test-results/${textId.value}`)
   } catch (err) {
     error.value = 'Failed to submit test. Please try again.'
+    console.error('Error submitting test:', err)
   } finally {
     isSubmitting.value = false
   }
 }
 
-onMounted(async () => {
-  try {
-    await loadQuestions()
-  } catch (err) {
-    console.error('Error in initial load:', err)
-  }
-})
+onMounted(loadQuestions)
 </script>
