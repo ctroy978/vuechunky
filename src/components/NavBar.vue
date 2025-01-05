@@ -23,7 +23,7 @@
             <router-link to="/student" :class="getLinkClasses('/student')">
               Student View
             </router-link>
-            <!-- New Teacher Links Section -->
+            <!-- Teacher Links Section -->
             <template v-if="userData.is_teacher">
               <router-link to="/teacher" :class="getLinkClasses('/teacher')">
                 Teacher View
@@ -33,6 +33,15 @@
                 :class="getLinkClasses('/teacher/completions')"
               >
                 Completions
+              </router-link>
+            </template>
+            <!-- Admin Links Section -->
+            <template v-if="userData.is_admin">
+              <router-link to="/admin" :class="getLinkClasses('/admin')">
+                Admin Dashboard
+              </router-link>
+              <router-link to="/admin/users" :class="getLinkClasses('/admin/users')">
+                Manage Users
               </router-link>
             </template>
             <div class="flex items-center space-x-2 text-gray-700 px-3 py-2">
@@ -84,7 +93,7 @@
           <router-link to="/student" :class="getMobileLinkClasses('/student')">
             Student View
           </router-link>
-          <!-- New Teacher Links Section -->
+          <!-- Teacher Links Section -->
           <template v-if="userData.is_teacher">
             <router-link to="/teacher" :class="getMobileLinkClasses('/teacher')">
               Teacher View
@@ -94,6 +103,15 @@
               :class="getMobileLinkClasses('/teacher/completions')"
             >
               Completions
+            </router-link>
+          </template>
+          <!-- Admin Links Section -->
+          <template v-if="userData.is_admin">
+            <router-link to="/admin" :class="getMobileLinkClasses('/admin')">
+              Admin Dashboard
+            </router-link>
+            <router-link to="/admin/users" :class="getMobileLinkClasses('/admin/users')">
+              Manage Users
             </router-link>
           </template>
           <div class="flex items-center space-x-2 text-gray-700 px-3 py-2">
@@ -137,6 +155,8 @@ const userData = ref({
   username: '',
   email: '',
   full_name: '',
+  is_teacher: false,
+  is_admin: false,
 })
 
 const currentRoute = computed(() => route.path)
@@ -159,6 +179,8 @@ const checkAuthStatus = () => {
       username: '',
       email: '',
       full_name: '',
+      is_teacher: false,
+      is_admin: false,
     }
     return
   }
@@ -171,6 +193,7 @@ const checkAuthStatus = () => {
       email: payload.sub || '',
       full_name: payload.full_name || '',
       is_teacher: payload.is_teacher || false,
+      is_admin: payload.admin_privilege || false,
     }
   } catch (error) {
     console.error('Error decoding token:', error)
@@ -185,6 +208,8 @@ const handleLogout = () => {
     username: '',
     email: '',
     full_name: '',
+    is_teacher: false,
+    is_admin: false,
   }
   router.push('/login')
 }
