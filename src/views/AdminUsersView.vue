@@ -82,14 +82,23 @@
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <span
-                :class="[
-                  'px-2 inline-flex text-xs leading-5 font-semibold rounded-full',
-                  user.is_admin ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800',
-                ]"
-              >
-                {{ user.is_admin ? 'Admin' : 'Regular User' }}
-              </span>
+              <div class="flex flex-col space-y-1">
+                <span
+                  :class="[
+                    'px-2 inline-flex text-xs leading-5 font-semibold rounded-full',
+                    user.is_admin ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800',
+                  ]"
+                >
+                  {{ user.is_admin ? 'Admin' : 'Regular User' }}
+                </span>
+                <span
+                  v-if="user.is_deleted"
+                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800"
+                  :title="'Deleted at: ' + formatDate(user.deleted_at)"
+                >
+                  Deleted
+                </span>
+              </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
               <button
@@ -109,8 +118,19 @@
               <button @click="toggleTeacher(user)" class="text-purple-600 hover:text-purple-900">
                 {{ user.is_teacher ? 'Remove Teacher' : 'Make Teacher' }}
               </button>
-              <button @click="handleUserDelete(user)" class="text-red-600 hover:text-red-900 ml-4">
+              <button
+                v-if="!user.is_deleted"
+                @click="handleUserDelete(user)"
+                class="text-red-600 hover:text-red-900 ml-4"
+              >
                 Delete User
+              </button>
+              <button
+                v-else
+                @click="handleUserRestore(user)"
+                class="text-green-600 hover:text-green-900 ml-4"
+              >
+                Restore User
               </button>
             </td>
           </tr>
@@ -123,12 +143,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { deleteUser } from '../services/api'
 import {
   getUsers,
   grantAdminPrivileges,
   revokeAdminPrivileges,
   toggleTeacherStatus,
+  deleteUser,
+  restoreUser,
 } from '../services/api'
 
 const router = useRouter()
@@ -199,6 +220,25 @@ const handleUserDelete = async (user) => {
     console.error('Failed to delete user:', err)
     alert('Failed to delete user: ' + err.message)
   }
+}
+
+const handleUserRestore = async (user) => {
+  if (!confirm(`Are you sure you want to restore ${user.full_name}?`)) {
+    return
+  }
+
+  try {
+    await restoreUser(user.id)
+    await loadUsers() // Refresh the list
+  } catch (err) {
+    console.error('Failed to restore user:', err)
+    alert('Failed to restore user: ' + err.message)
+  }
+}
+
+const formatDate = (date) => {
+  if (!date) return ''
+  return new Date(date).toLocaleString()
 }
 
 onMounted(() => {

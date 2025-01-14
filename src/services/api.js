@@ -1,5 +1,6 @@
 // src/services/api.js
-const API_URL = 'http://localhost:8000'
+//const tPI_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL)
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {
@@ -32,7 +33,7 @@ const getAuthHeader = () => {
 
 // Auth endpoints
 export const initiateRegistration = async (studentData) => {
-  const response = await fetch(`${API_URL}/auth/initiate-registration`, {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/initiate-registration`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -43,7 +44,7 @@ export const initiateRegistration = async (studentData) => {
 }
 
 export const completeRegistration = async (registrationData) => {
-  const response = await fetch(`${API_URL}/auth/complete-registration`, {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/complete-registration`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -54,18 +55,21 @@ export const completeRegistration = async (registrationData) => {
 }
 
 export const requestOTP = async (email) => {
-  const response = await fetch(`${API_URL}/auth/request-otp`, {
+  console.log('Making OTP request to:', `${import.meta.env.VITE_API_BASE_URL}/auth/request-otp`)
+  console.log('With email:', email)
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/request-otp`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ email }),
   })
+  console.log('Response status:', response.status)
   return handleResponse(response)
 }
 
 export const verifyOTP = async (email, otp) => {
-  const response = await fetch(`${API_URL}/auth/verify-otp`, {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/verify-otp`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -77,7 +81,7 @@ export const verifyOTP = async (email, otp) => {
 
 // Teacher endpoints
 export const getTeacherTexts = async () => {
-  const response = await fetch(`${API_URL}/addtext/texts/`, {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/addtext/texts/`, {
     headers: {
       ...getAuthHeader(),
     },
@@ -94,7 +98,7 @@ export const addText = async ({ title, content }) => {
   const token = localStorage.getItem('token')
   const headers = token ? { Authorization: `Bearer ${token}` } : {}
 
-  const response = await fetch(`${API_URL}/addtext/texts/`, {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/addtext/texts/`, {
     method: 'POST',
     headers: headers,
     body: formData,
@@ -110,7 +114,7 @@ export const addText = async ({ title, content }) => {
 }
 
 export const deleteText = async (textId) => {
-  const response = await fetch(`${API_URL}/addtext/texts/${textId}`, {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/addtext/texts/${textId}`, {
     method: 'DELETE',
     headers: {
       ...getAuthHeader(),
@@ -121,7 +125,7 @@ export const deleteText = async (textId) => {
 
 // Student endpoints
 export const getTeachers = async () => {
-  const response = await fetch(`${API_URL}/student/teachers/`, {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/student/teachers/`, {
     headers: {
       ...getAuthHeader(),
     },
@@ -130,30 +134,39 @@ export const getTeachers = async () => {
 }
 
 export const getTeacherTextsForStudent = async (teacherId) => {
-  const response = await fetch(`${API_URL}/student/teachers/${teacherId}/texts`, {
-    headers: {
-      ...getAuthHeader(),
+  const response = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/student/teachers/${teacherId}/texts`,
+    {
+      headers: {
+        ...getAuthHeader(),
+      },
     },
-  })
+  )
   return handleResponse(response)
 }
 
 export const getFirstChunk = async (textId) => {
-  const response = await fetch(`${API_URL}/student/texts/${textId}/first-chunk`, {
-    headers: {
-      ...getAuthHeader(),
+  const response = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/student/texts/${textId}/first-chunk`,
+    {
+      headers: {
+        ...getAuthHeader(),
+      },
     },
-  })
+  )
   return handleResponse(response)
 }
 
 export const getNextChunk = async (textId, currentChunkId) => {
   console.log('Getting next chunk with:', { textId, currentChunkId }) // Debug log
-  const response = await fetch(`${API_URL}/student/texts/${textId}/next-chunk/${currentChunkId}`, {
-    headers: {
-      ...getAuthHeader(),
+  const response = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/student/texts/${textId}/next-chunk/${currentChunkId}`,
+    {
+      headers: {
+        ...getAuthHeader(),
+      },
     },
-  })
+  )
   return handleResponse(response)
 }
 
@@ -178,7 +191,7 @@ export const generateQuestion = async (chunkId, textId) => {
   }
 
   try {
-    const response = await fetch(`${API_URL}/questions/generate`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/questions/generate`, {
       method: 'POST',
       credentials: 'include', // Add this line
       headers: {
@@ -208,7 +221,7 @@ export const generateQuestion = async (chunkId, textId) => {
 
 //submit button for submitting answers
 export const evaluateAnswer = async (answerData) => {
-  const response = await fetch(`${API_URL}/questions/evaluate-answer`, {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/questions/evaluate-answer`, {
     method: 'POST',
     headers: {
       ...getAuthHeader(),
@@ -221,7 +234,7 @@ export const evaluateAnswer = async (answerData) => {
 
 export const generateTest = async (textId) => {
   try {
-    const response = await fetch(`${API_URL}/test/generate`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/test/generate`, {
       method: 'POST',
       credentials: 'include', // Add this
       headers: {
@@ -245,7 +258,7 @@ export const generateTest = async (textId) => {
   }
 }
 export const submitTest = async (textId, answers) => {
-  const response = await fetch(`${API_URL}/test/submit`, {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/test/submit`, {
     method: 'POST',
     headers: {
       ...getAuthHeader(),
@@ -270,17 +283,20 @@ export const getCompletions = async (params = {}) => {
     }
   })
 
-  const response = await fetch(`${API_URL}/completions?${searchParams.toString()}`, {
-    headers: {
-      ...getAuthHeader(),
+  const response = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/completions?${searchParams.toString()}`,
+    {
+      headers: {
+        ...getAuthHeader(),
+      },
     },
-  })
+  )
   return handleResponse(response)
 }
 
 export const getCompletionsByStudent = async (studentName, skip = 0, limit = 100) => {
   const response = await fetch(
-    `${API_URL}/completions/by-student/${encodeURIComponent(studentName)}?skip=${skip}&limit=${limit}`,
+    `${import.meta.env.VITE_API_BASE_URL}/completions/by-student/${encodeURIComponent(studentName)}?skip=${skip}&limit=${limit}`,
     {
       headers: {
         ...getAuthHeader(),
@@ -292,7 +308,7 @@ export const getCompletionsByStudent = async (studentName, skip = 0, limit = 100
 
 export const getCompletionsByText = async (textId, skip = 0, limit = 100) => {
   const response = await fetch(
-    `${API_URL}/completions/by-text/${textId}?skip=${skip}&limit=${limit}`,
+    `${import.meta.env.VITE_API_BASE_URL}/completions/by-text/${textId}?skip=${skip}&limit=${limit}`,
     {
       headers: {
         ...getAuthHeader(),
@@ -304,7 +320,7 @@ export const getCompletionsByText = async (textId, skip = 0, limit = 100) => {
 
 // Admin endpoints
 export const getUsers = async () => {
-  const response = await fetch(`${API_URL}/admin/users`, {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/users`, {
     headers: {
       ...getAuthHeader(),
     },
@@ -313,7 +329,7 @@ export const getUsers = async () => {
 }
 
 export const grantAdminPrivileges = async (userId, reason) => {
-  const response = await fetch(`${API_URL}/admin/grant-admin`, {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/grant-admin`, {
     method: 'POST',
     headers: {
       ...getAuthHeader(),
@@ -328,8 +344,33 @@ export const grantAdminPrivileges = async (userId, reason) => {
 }
 
 export const revokeAdminPrivileges = async (userId) => {
-  const response = await fetch(`${API_URL}/admin/revoke-admin/${userId}`, {
-    method: 'POST',
+  const response = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/admin/revoke-admin/${userId}`,
+    {
+      method: 'POST',
+      headers: {
+        ...getAuthHeader(),
+      },
+    },
+  )
+  return handleResponse(response)
+}
+
+export const toggleTeacherStatus = async (userId) => {
+  const response = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/admin/toggle-teacher/${userId}`,
+    {
+      method: 'POST',
+      headers: {
+        ...getAuthHeader(),
+      },
+    },
+  )
+  return handleResponse(response)
+}
+export const deleteUser = async (userId) => {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/users/${userId}`, {
+    method: 'DELETE',
     headers: {
       ...getAuthHeader(),
     },
@@ -337,21 +378,15 @@ export const revokeAdminPrivileges = async (userId) => {
   return handleResponse(response)
 }
 
-export const toggleTeacherStatus = async (userId) => {
-  const response = await fetch(`${API_URL}/admin/toggle-teacher/${userId}`, {
-    method: 'POST',
-    headers: {
-      ...getAuthHeader(),
+export const restoreUser = async (userId) => {
+  const response = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/admin/users/${userId}/restore`,
+    {
+      method: 'POST',
+      headers: {
+        ...getAuthHeader(),
+      },
     },
-  })
-  return handleResponse(response)
-}
-export const deleteUser = async (userId) => {
-  const response = await fetch(`${API_URL}/admin/users/${userId}`, {
-    method: 'DELETE',
-    headers: {
-      ...getAuthHeader(),
-    },
-  })
+  )
   return handleResponse(response)
 }
